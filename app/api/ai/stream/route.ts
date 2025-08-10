@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server';
-import { openai } from '@/lib/openai';
+import { openai } from '../../../../lib/openai'; // <-- relative path (no @)
 
-export const runtime = 'nodejs'; // use Node runtime for streaming
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   const { messages } = await req.json();
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-  // Start a streamed chat completion
   const completion = await openai.chat.completions.create({
     model,
     stream: true,
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
   });
 
   const encoder = new TextEncoder();
-
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -23,8 +21,8 @@ export async function POST(req: NextRequest) {
           const delta = part.choices?.[0]?.delta?.content ?? '';
           if (delta) controller.enqueue(encoder.encode(delta));
         }
-      } catch (err) {
-        controller.error(err);
+      } catch (e) {
+        controller.error(e);
       } finally {
         controller.close();
       }
@@ -39,3 +37,5 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+
